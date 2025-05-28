@@ -3,12 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>VUMC Live Streams</title>
+  <title>YouTube Playlist Grid</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <h1>VUMC Live Streams</h1>
+  <h1>YouTube Playlist Grid</h1>
   <div id="grid"></div>
+
+  <!-- Modal container -->
+  <div id="videoModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <iframe id="videoFrame" width="100%" height="400" frameborder="0" allowfullscreen></iframe>
+    </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
