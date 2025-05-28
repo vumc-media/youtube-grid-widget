@@ -1,4 +1,4 @@
-const apiKey = 'AIzaSyAiXOBowvA3h2fzPCyZXf2OkJNQUNupPxo';
+const apiKey = 'AIzaSyCLVqRwWSV-XaU5FpsY_7E7Cwr2SzTX-mg';
 const playlistId = 'PLD_PrR9HqVplPbdJn4BNN70FGPWvlYOB1';
 const maxResults = 50;
 
