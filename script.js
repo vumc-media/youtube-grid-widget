@@ -30,26 +30,31 @@ fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlist
       `;
       grid.appendChild(div);
     });
+
+    // Attach modal logic after videos load
+    document.querySelectorAll('.thumbnail').forEach(item => {
+      item.addEventListener('click', function () {
+        const videoId = this.getAttribute('data-video');
+        const modal = document.getElementById('videoModal');
+        const frame = document.getElementById('videoFrame');
+        frame.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+        modal.style.display = 'block';
+      });
+    });
+
+    document.querySelector('.close').addEventListener('click', function () {
+      document.getElementById('videoModal').style.display = 'none';
+      document.getElementById('videoFrame').src = '';
+    });
+
+    window.addEventListener('click', function (e) {
+      if (e.target.id === 'videoModal') {
+        document.getElementById('videoModal').style.display = 'none';
+        document.getElementById('videoFrame').src = '';
+      }
+    });
   })
   .catch(error => {
     console.error('Error loading playlist:', error);
     document.getElementById('grid').innerText = 'Failed to load playlist.';
   });
-
-// Handle modal video playback
-document.addEventListener('click', function (e) {
-  if (e.target.closest('.thumbnail')) {
-    const videoId = e.target.closest('.thumbnail').getAttribute('data-video');
-    const modal = document.getElementById('videoModal');
-    const frame = document.getElementById('videoFrame');
-    frame.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-    modal.style.display = 'block';
-  }
-
-  if (e.target.classList.contains('close') || e.target.id === 'videoModal') {
-    const modal = document.getElementById('videoModal');
-    const frame = document.getElementById('videoFrame');
-    frame.src = '';
-    modal.style.display = 'none';
-  }
-});
