@@ -3,16 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VUMC YouTube Streams Grid (Demo)</title>
+  <title>VUMC YouTube Streams Grid (Popup)</title>
   <link rel="stylesheet" href="youtube-grid.css" />
 </head>
 <body>
   <div class="wrap">
-    <h1>Versailles UMC – Streams & Sermons</h1>
-    <p class="sub">
-      Auto-updating grid from your YouTube channel. Live items get a red “LIVE” badge, upcoming show the scheduled time,
-      completed items show the published date.
-    </p>
+    <h1>Versailles UMC – Streams &amp; Sermons</h1>
+    <p class="sub">Click any card to watch in a popup. Live items show a red “LIVE” badge; upcoming shows the scheduled time.</p>
 
     <!-- WIDGET MOUNT POINT -->
     <div id="youtube-grid"
@@ -26,6 +23,14 @@
       Tip: restrict your API key to your domain in the Google Cloud Console (API restrictions: YouTube Data API v3,
       Application restrictions: HTTP referrers).
     </p>
+  </div>
+
+  <!-- Modal for popup video -->
+  <div id="ytModal" class="modal hidden" aria-hidden="true" role="dialog" aria-label="Video player">
+    <div class="modal-content">
+      <button class="close" aria-label="Close">&times;</button>
+      <iframe id="ytPlayer" src="" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+    </div>
   </div>
 
   <script src="youtube-grid.js"></script>
