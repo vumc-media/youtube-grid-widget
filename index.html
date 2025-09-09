@@ -2,22 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>VUMC Live Streams</title>
-  <link rel="stylesheet" href="style.css"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VUMC YouTube Streams Grid (Demo)</title>
+  <link rel="stylesheet" href="youtube-grid.css" />
 </head>
 <body>
-  <h1>VUMC Live Streams</h1>
-  <div id="grid"></div>
+  <div class="wrap">
+    <h1>Versailles UMC – Streams & Sermons</h1>
+    <p class="sub">
+      Auto-updating grid from your YouTube channel. Live items get a red “LIVE” badge, upcoming show the scheduled time,
+      completed items show the published date.
+    </p>
 
-  <!-- Modal container -->
-  <div id="videoModal" class="modal">
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <iframe id="videoFrame" width="100%" height="400" frameborder="0" allowfullscreen></iframe>
+    <!-- WIDGET MOUNT POINT -->
+    <div id="youtube-grid"
+         data-channel-id="UC_svgodM3blLqWEBQ5yNjmA"
+         data-api-key="YOUR_API_KEY_HERE"
+         data-max-results="12"
+         data-open-in="newtab">
     </div>
+
+    <p class="note">
+      Tip: restrict your API key to your domain in the Google Cloud Console (API restrictions: YouTube Data API v3,
+      Application restrictions: HTTP referrers).
+    </p>
   </div>
 
-  <script src="script.js"></script>
+  <script src="youtube-grid.js"></script>
 </body>
 </html>
