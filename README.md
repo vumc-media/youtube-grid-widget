@@ -40,3 +40,9 @@ The mount element accepts data attributes:
 - The API call uses `search.list` for recent videos, then `videos.list` to enrich with `liveStreamingDetails` (scheduled/actual times).
 - If your channel posts lots of non-sermon videos, you can filter or sort client‑side in `youtube-grid.js` (search for the `// render cards` section).
 - If you need **only live** or **only upcoming**, uncomment `eventType` in the `searchURL` params in `youtube-grid.js`.
+
+## Security reminder
+Your API key is embedded client-side. In Google Cloud Console, set:
+- **Application restrictions:** HTTP referrers (web sites) → add your site(s)
+- **API restrictions:** Enable only **YouTube Data API v3**
+If you change domains, update the allowed referrers.
