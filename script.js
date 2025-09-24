@@ -1,10 +1,12 @@
-/* VUMC YouTube Grid (RSS, inline play, no modal) - CORS-safe
- * - Tries direct fetch to YouTube RSS; on CORS failure, retries via AllOrigins proxy
- * - Click a card to play inline (iframe replaces the image)
+/* VUMC YouTube Grid (RSS, inline play, no modal, expand-on-phone)
+ * - No API key needed (uses channel RSS)
+ * - CORS-safe: tries direct fetch, then falls back to AllOrigins proxy
+ * - Click a card: plays inline; on small screens the card expands full-bleed
+ * - Close button collapses back; Esc key also closes
  */
 
 (function () {
-  const CHANNEL_ID = window.CHANNEL_ID || "";
+  const CHANNEL_ID = window.CHANNEL_ID || ""; // set in index.html
   const FEED_URL = `https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(CHANNEL_ID)}`;
 
   const grid = document.getElementById("grid");
@@ -21,6 +23,10 @@
 
     q?.addEventListener("input", onSearch);
     reloadBtn?.addEventListener("click", () => loadFeed(true));
+    // Close expanded on Esc
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") collapseCard();
+    });
   }
 
   async function loadFeed(bust = false) {
@@ -44,20 +50,20 @@
     const bustQ = bust ? (url.includes("?") ? "&" : "?") + "t=" + Date.now() : "";
     const direct = url + bustQ;
 
-    // 1) Try direct (may fail due to CORS)
+    // 1) Try direct
     try {
       const r = await fetch(direct, { mode: "cors" });
       if (r.ok) return await r.text();
-      // If status is 200-299 but opaque, fall through to proxy
-    } catch (_) { /* ignore and try proxy */ }
+    } catch (_) { /* fall through */ }
 
-    // 2) CORS-friendly proxy (AllOrigins)
+    // 2) Proxy (AllOrigins)
     const proxied = `https://api.allorigins.win/raw?url=${encodeURIComponent(direct)}`;
     const rp = await fetch(proxied);
     if (!rp.ok) throw new Error(`Proxy fetch failed: ${rp.status}`);
     return await rp.text();
   }
 
+  // ---- Parse YouTube RSS ----
   function parseYouTubeFeed(xmlText) {
     const doc = new window.DOMParser().parseFromString(xmlText, "application/xml");
     const parseErr = doc.querySelector("parsererror");
@@ -65,7 +71,7 @@
 
     const entries = Array.from(doc.querySelectorAll("entry"));
     const items = entries.map(e => {
-      const id = text(e, "id");                  // yt:video:VIDEOID
+      const id = text(e, "id"); // yt:video:VIDEOID
       const videoId = id.split(":").pop();
       const title = text(e, "title");
       const published = text(e, "published");
@@ -83,8 +89,9 @@
     return parent.querySelector(tag)?.textContent || "";
   }
 
+  // ---- Search ----
   function onSearch() {
-    const term = (q.value || "").trim().toLowerCase();
+    const term = (q?.value || "").trim().toLowerCase();
     filtered = !term
       ? allItems.slice()
       : allItems.filter(v =>
@@ -94,6 +101,7 @@
     render();
   }
 
+  // ---- Render ----
   function render() {
     grid.innerHTML = "";
     const frag = document.createDocumentFragment();
@@ -119,9 +127,10 @@
     return el;
   }
 
-  // Replace a thumbnail with an inline YouTube iframe (muted autoplay)
+  // ---- Inline play + expand-on-phone ----
   function playInline(thumbEl) {
-    stopAllInlinePlayers();
+    stopAllInlinePlayers(); // ensure only one plays
+
     const vid = thumbEl.dataset.video;
     thumbEl.innerHTML = `
       <iframe
@@ -131,9 +140,39 @@
         allowfullscreen
         style="width:100%;height:100%;border:0;display:block;"
       ></iframe>`;
+
+    const card = thumbEl.closest(".card");
+
+    // Add close button once
+    let close = card.querySelector(".closebtn");
+    if (!close) {
+      close = document.createElement("button");
+      close.className = "closebtn";
+      close.textContent = "✕";
+      close.addEventListener("click", collapseCard);
+      card.appendChild(close);
+    }
+
+    // On small screens, expand to full-bleed
+    if (isSmallScreen()) {
+      card.classList.add("expanded");
+      // lock page scroll under expanded card
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+    }
   }
 
-  // Restore all thumbs (stop any active players)
+  function collapseCard() {
+    // restore scroll
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
+
+    const expanded = document.querySelector(".card.expanded");
+    if (expanded) expanded.classList.remove("expanded");
+    stopAllInlinePlayers();
+  }
+
+  // Replace any iframes with their original thumbnails
   function stopAllInlinePlayers() {
     document.querySelectorAll(".thumb").forEach(t => {
       if (t.querySelector("iframe")) {
@@ -146,6 +185,11 @@
     });
   }
 
+  function isSmallScreen() {
+    return window.matchMedia("(max-width: 768px)").matches;
+  }
+
+  // ---- Utils ----
   function fmtDate(iso) {
     const d = new Date(iso);
     if (isNaN(d)) return "";
@@ -154,7 +198,7 @@
 
   function esc(s) {
     return String(s || "").replace(/[&<>"']/g, c => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
     }[c]));
   }
 })();
