@@ -1,37 +1,32 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VUMC YouTube Streams Grid (Popup)</title>
-  <link rel="stylesheet" href="youtube-grid.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>VUMC YouTube Grid</title>
+  <link rel="preconnect" href="https://i.ytimg.com">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="wrap">
-    <h1>Versailles UMC – Streams &amp; Sermons</h1>
+  <main class="wrap">
+    <header class="header">
+      <h1 class="title">Latest Videos</h1>
+      <div class="searchbox">
+        <input id="q" type="search" placeholder="Search videos…" aria-label="Search videos">
+      </div>
+    </header>
 
-    <!-- WIDGET MOUNT POINT -->
-    <div id="youtube-grid"
-         data-channel-id="UC_svgodM3blLqWEBQ5yNjmA"
-         data-api-key="AIzaSyAJ_I47ep-oqTSvamGqMS9h7e4jT6aG8z4"
-         data-max-results="12"
-         data-open-in="newtab">
+    <section id="grid" class="grid" aria-live="polite"></section>
+
+    <div class="controls">
+      <button id="reload" class="btn">Refresh</button>
     </div>
+  </main>
 
-    <p class="note">
-      Tip: restrict your API key to your domain in the Google Cloud Console (API restrictions: YouTube Data API v3,
-      Application restrictions: HTTP referrers).
-    </p>
-  </div>
-
-  <!-- Modal for popup video -->
-  <div id="ytModal" class="modal hidden" aria-hidden="true" role="dialog" aria-label="Video player">
-    <div class="modal-content">
-      <button class="close" aria-label="Close">&times;</button>
-      <iframe id="ytPlayer" src="" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
-    </div>
-  </div>
-
-  <script src="youtube-grid.js"></script>
+  <script>
+    // Your channel ID
+    window.CHANNEL_ID = "UC_svgodM3blLqWEBQ5yNjmA";
+  </script>
+  <script src="script.js" defer></script>
 </body>
 </html>
