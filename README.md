@@ -1,17 +1,11 @@
-# YouTube Streams Grid (Popup Player)
-A static widget that lists your channel’s recent / live / upcoming videos in a responsive grid. Clicking a card opens a **popup modal player**.
+# VUMC YouTube Grid (GitHub Pages)
 
-## Quick start
-1. Enable **YouTube Data API v3** in Google Cloud Console and create an API key.
-2. Open `index.html` and verify `data-channel-id` and `data-api-key` are correct.
-3. Publish the folder to **GitHub Pages** (or any static host).
+Simple, reliable YouTube grid that **plays inline on click**.
+- **No modal**, no separate top player.
+- **No API key** required (uses YouTube’s public RSS feed).
+- Works on GitHub Pages and Google Sites (as an iframe to your GH page).
 
-## Embed on any site
-```html
-<iframe src="https://YOURNAME.github.io/vumc-youtube-grid-modal/" style="width:100%;height:1000px;border:0;"></iframe>
-```
-
-## Security
-Restrict your API key:
-- Application restrictions: **HTTP referrers (web sites)**
-- API restrictions: **YouTube Data API v3**
+## Use
+1. Set your channel ID in `index.html`:
+   ```html
+   <script>window.CHANNEL_ID = "UC_svgodM3blLqWEBQ5yNjmA";</script>
