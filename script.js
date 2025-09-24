@@ -1,7 +1,6 @@
-/* VUMC YouTube Grid (RSS, inline play, no modal)
- * - No API key required (uses public channel RSS feed)
+/* VUMC YouTube Grid (RSS, inline play, no modal) - CORS-safe
+ * - Tries direct fetch to YouTube RSS; on CORS failure, retries via AllOrigins proxy
  * - Click a card to play inline (iframe replaces the image)
- * - Clicking a different card stops others (restores thumbnail)
  */
 
 (function () {
@@ -18,36 +17,55 @@
   init();
 
   function init() {
-    fetchFeed().then(items => {
+    loadFeed();
+
+    q?.addEventListener("input", onSearch);
+    reloadBtn?.addEventListener("click", () => loadFeed(true));
+  }
+
+  async function loadFeed(bust = false) {
+    grid.innerHTML = "";
+    try {
+      const xmlText = await fetchWithCors(FEED_URL, bust);
+      const items = parseYouTubeFeed(xmlText);
       allItems = items;
       filtered = items.slice();
       render();
-    }).catch(err => {
+    } catch (err) {
       console.error(err);
       grid.innerHTML = `<div style="padding:12px;color:#b00020;">Could not load videos.</div>`;
-    });
-
-    q?.addEventListener("input", onSearch);
-    reloadBtn?.addEventListener("click", () => {
-      reloadBtn.disabled = true;
-      fetchFeed(true).then(items => {
-        allItems = items;
-        filtered = items.slice();
-        render();
-      }).finally(() => (reloadBtn.disabled = false));
-    });
+    } finally {
+      if (reloadBtn) reloadBtn.disabled = false;
+    }
   }
 
-  async function fetchFeed(bustCache = false) {
-    const url = FEED_URL + (bustCache ? `&t=${Date.now()}` : "");
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Feed error ${res.status}`);
-    const xmlText = await res.text();
+  // ---- CORS helper: try direct, then proxy ----
+  async function fetchWithCors(url, bust = false) {
+    const bustQ = bust ? (url.includes("?") ? "&" : "?") + "t=" + Date.now() : "";
+    const direct = url + bustQ;
+
+    // 1) Try direct (may fail due to CORS)
+    try {
+      const r = await fetch(direct, { mode: "cors" });
+      if (r.ok) return await r.text();
+      // If status is 200-299 but opaque, fall through to proxy
+    } catch (_) { /* ignore and try proxy */ }
+
+    // 2) CORS-friendly proxy (AllOrigins)
+    const proxied = `https://api.allorigins.win/raw?url=${encodeURIComponent(direct)}`;
+    const rp = await fetch(proxied);
+    if (!rp.ok) throw new Error(`Proxy fetch failed: ${rp.status}`);
+    return await rp.text();
+  }
+
+  function parseYouTubeFeed(xmlText) {
     const doc = new window.DOMParser().parseFromString(xmlText, "application/xml");
+    const parseErr = doc.querySelector("parsererror");
+    if (parseErr) throw new Error("Invalid XML received.");
 
     const entries = Array.from(doc.querySelectorAll("entry"));
     const items = entries.map(e => {
-      const id = text(e, "id");           // yt:video:VIDEOID
+      const id = text(e, "id");                  // yt:video:VIDEOID
       const videoId = id.split(":").pop();
       const title = text(e, "title");
       const published = text(e, "published");
@@ -57,7 +75,6 @@
       return { videoId, title, published, thumbnail: thumb, description: desc };
     });
 
-    // newest first (RSS usually already sorted)
     items.sort((a, b) => new Date(b.published) - new Date(a.published));
     return items;
   }
@@ -119,8 +136,7 @@
   // Restore all thumbs (stop any active players)
   function stopAllInlinePlayers() {
     document.querySelectorAll(".thumb").forEach(t => {
-      const isIframe = !!t.querySelector("iframe");
-      if (isIframe) {
+      if (t.querySelector("iframe")) {
         const thumbUrl = t.dataset.thumb || "";
         t.innerHTML = `
           <img loading="lazy" src="${esc(thumbUrl)}" alt="">
