@@ -35,4 +35,86 @@
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
+}/* Safe-area vars (iOS notches) */
+:root{
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/* Default (desktop/tablet landscape): full viewport expand */
+.card.expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #000;
+  border-radius: 0;
+  margin: 0;
+}
+.card.expanded .thumb {
+  position: absolute;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  aspect-ratio: auto;
+  background: #000;
+  cursor: default;
+}
+.card.expanded .meta,
+.card.expanded .playbtn { display: none; }
+
+.card .closebtn { display: none; }
+.card.expanded .closebtn {
+  display: inline-flex;
+  position: fixed;
+  top: calc(10px + var(--safe-top));
+  right: 10px;
+  z-index: 10000;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(0,0,0,.5);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* ---------- MOBILE TUNING ---------- */
+/* On narrow screens, make the expanded player a bottom sheet with a 16:9 box,
+   not full-screen. This prevents “too big” and keeps controls reachable. */
+@media (max-width: 768px){
+  .card.expanded {
+    position: fixed;
+    left: 0; right: 0;
+    bottom: 0;
+    top: auto;                 /* don’t cover the whole screen */
+    z-index: 9999;
+    background: #000;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -12px 40px rgba(0,0,0,.35);
+    padding-bottom: calc(8px + var(--safe-bottom));
+  }
+
+  /* 16:9 box sized to screen width, capped by 75vh so it never overwhelms */
+  .card.expanded .thumb {
+    position: relative;
+    inset: auto;
+    width: 100vw;
+    max-width: 100%;
+    height: min(calc(100vw * 9 / 16), 75vh);
+    margin: 0 auto;
+    border-radius: 16px 16px 0 0;
+    background: #000;
+  }
+
+  /* Keep the close button visible and touch-friendly */
+  .card.expanded .closebtn {
+    position: absolute;    /* relative to the card */
+    top: 8px;
+    right: 12px;
+    padding: 10px 12px;
+    font-size: 16px;
+  }
+}
+
