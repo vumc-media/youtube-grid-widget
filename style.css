@@ -1,50 +1,4 @@
-:root { --gap:12px; --radius:14px; --maxw:1200px; }
-* { box-sizing: border-box; }
-html,body { margin:0; padding:0; }
-body {
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  background:#f7f7f9; color:#111;
-}
-.wrap { max-width: var(--maxw); margin: 0 auto; padding: 16px; }
-.header {
-  display:grid; grid-template-columns: 1fr auto; gap:12px; align-items:center; margin-bottom:12px;
-}
-.title { margin:0; font-size:18px; font-weight:700; }
-.searchbox { display:flex; align-items:center; }
-.searchbox input {
-  padding:10px 12px; border:1px solid #ddd; border-radius:10px; background:#fff; font-size:14px; width: 260px;
-}
-.grid {
-  display:grid; gap: var(--gap); grid-template-columns: repeat(2, 1fr);
-}
-@media (min-width:700px){ .grid{ grid-template-columns: repeat(3, 1fr); } }
-@media (min-width:1000px){ .grid{ grid-template-columns: repeat(4, 1fr); } }
-
-.card {
-  background:#fff; border-radius:var(--radius); overflow:hidden; border:1px solid #eee; display:flex; flex-direction:column;
-}
-.thumb {
-  position:relative; aspect-ratio:16/9; background:#ddd; overflow:hidden; cursor:pointer;
-}
-.thumb img { width:100%; height:100%; object-fit:cover; display:block; }
-.playbtn {
-  position:absolute; inset:0; display:grid; place-items:center;
-  background:linear-gradient(to top, rgba(0,0,0,.35), rgba(0,0,0,0)); pointer-events:none;
-}
-.triangle {
-  width:0; height:0; border-left:18px solid #fff; border-top:12px solid transparent; border-bottom:12px solid transparent;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,.4));
-}
-.meta { padding:10px 12px 12px; display:grid; gap:6px; }
-.vtitle { font-size:14px; font-weight:600; line-height:1.25; }
-.subtle { color:#666; font-size:12px; }
-
-.controls { display:grid; place-items:center; margin:16px 0 6px; }
-.btn {
-  padding:10px 14px; border:1px solid #ddd; background:#fff; border-radius:999px; cursor:pointer; font-weight:600;
-}
-.hidden { display:none !important; }
-/* --- Inline expand-to-fullscreen --- */
+/* Expand-to-fullscreen behavior */
 .card.expanded {
   position: fixed;
   inset: 0;
@@ -58,16 +12,14 @@ body {
   inset: 0;
   width: 100vw;
   height: 100vh;
-  aspect-ratio: auto; /* let it fill */
+  aspect-ratio: auto;
   background: #000;
   cursor: default;
 }
 .card.expanded .meta,
 .card.expanded .playbtn { display: none; }
 
-.card .closebtn {
-  display: none;
-}
+.card .closebtn { display: none; }
 .card.expanded .closebtn {
   display: inline-flex;
   position: fixed;
@@ -83,6 +35,4 @@ body {
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
-  user-select: none;
 }
-
