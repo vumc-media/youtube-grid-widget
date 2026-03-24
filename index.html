@@ -10,7 +10,7 @@
 <body>
   <main class="wrap">
     <header class="header">
-      <h1 class="title">Latest Videos</h1>
+      <h1 class="title">Past Messages</h1>
       <div class="searchbox">
         <input id="q" type="search" placeholder="Search videos…" aria-label="Search videos">
       </div>
@@ -23,8 +23,24 @@
     </div>
   </main>
 
+  <!-- Video Modal -->
+  <div id="videoModal" class="video-modal hidden" aria-hidden="true">
+    <div class="video-modal-backdrop" id="videoModalBackdrop"></div>
+    <div class="video-modal-content" role="dialog" aria-modal="true" aria-label="Video player">
+      <button id="videoModalClose" class="video-modal-close" aria-label="Close video">✕</button>
+      <div class="video-frame-wrap">
+        <iframe
+          id="videoModalFrame"
+          src=""
+          title="YouTube video player"
+          allow="autoplay; encrypted-media; picture-in-picture; clipboard-write; fullscreen"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // Your channel ID
     window.CHANNEL_ID = "UC_svgodM3blLqWEBQ5yNjmA";
   </script>
   <script src="script.js" defer></script>
