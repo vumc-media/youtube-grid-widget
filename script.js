@@ -1,8 +1,6 @@
 /* VUMC YouTube Grid
- * - Inline click-to-play (no modal, no auto-expand on mobile)
- * - Optional Expand button:
- *     1) try native Fullscreen API (best on desktop)
- *     2) fallback to CSS expand (works everywhere, incl. Sites)
+ * - Shows past videos only
+ * - Click thumbnail to open video in modal popup
  * - RSS + AllOrigins proxy fallback (no API key)
  */
 
@@ -14,6 +12,11 @@
   const q = document.getElementById("q");
   const reloadBtn = document.getElementById("reload");
 
+  const modal = document.getElementById("videoModal");
+  const modalFrame = document.getElementById("videoModalFrame");
+  const modalClose = document.getElementById("videoModalClose");
+  const modalBackdrop = document.getElementById("videoModalBackdrop");
+
   let allItems = [];
   let filtered = [];
 
@@ -24,8 +27,12 @@
 
     q?.addEventListener("input", onSearch);
     reloadBtn?.addEventListener("click", () => loadFeed(true));
+
+    modalClose?.addEventListener("click", closeModal);
+    modalBackdrop?.addEventListener("click", closeModal);
+
     window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") collapseAny();
+      if (e.key === "Escape") closeModal();
     });
   }
 
@@ -33,7 +40,15 @@
     grid.innerHTML = "";
     try {
       const xmlText = await fetchWithCors(FEED_URL, bust);
-      const items = parseYouTubeFeed(xmlText);
+      let items = parseYouTubeFeed(xmlText);
+
+      // Keep only videos published in the past
+      const now = new Date();
+      items = items.filter(item => {
+        const publishedDate = new Date(item.published);
+        return !isNaN(publishedDate) && publishedDate <= now;
+      });
+
       allItems = items;
       filtered = items.slice();
       render();
@@ -45,7 +60,6 @@
     }
   }
 
-  // ---- CORS helper: direct -> proxy fallback ----
   async function fetchWithCors(url, bust = false) {
     const bustQ = bust ? (url.includes("?") ? "&" : "?") + "t=" + Date.now() : "";
     const direct = url + bustQ;
@@ -61,28 +75,33 @@
     return await rp.text();
   }
 
-  // ---- Parse YouTube RSS ----
   function parseYouTubeFeed(xmlText) {
     const doc = new DOMParser().parseFromString(xmlText, "application/xml");
     if (doc.querySelector("parsererror")) throw new Error("Invalid XML");
 
     const entries = Array.from(doc.querySelectorAll("entry"));
     const items = entries.map(e => {
-      const id = e.querySelector("id")?.textContent || "";       // yt:video:VIDEOID
+      const id = e.querySelector("id")?.textContent || "";
       const videoId = id.split(":").pop();
       const title = e.querySelector("title")?.textContent || "";
       const published = e.querySelector("published")?.textContent || "";
       const group = e.querySelector("group");
       const thumb = group?.querySelector("thumbnail")?.getAttribute("url") || "";
       const desc = group?.querySelector("description")?.textContent || "";
-      return { videoId, title, published, thumbnail: thumb, description: desc };
+
+      return {
+        videoId,
+        title,
+        published,
+        thumbnail: thumb,
+        description: desc
+      };
     });
 
     items.sort((a, b) => new Date(b.published) - new Date(a.published));
     return items;
   }
 
-  // ---- Search ----
   function onSearch() {
     const term = (q?.value || "").trim().toLowerCase();
     filtered = !term
@@ -94,9 +113,14 @@
     render();
   }
 
-  // ---- Render ----
   function render() {
     grid.innerHTML = "";
+
+    if (!filtered.length) {
+      grid.innerHTML = `<div style="padding:12px;">No past videos found.</div>`;
+      return;
+    }
+
     const frag = document.createDocumentFragment();
     filtered.forEach(v => frag.appendChild(card(v)));
     grid.appendChild(frag);
@@ -106,10 +130,10 @@
     const el = document.createElement("div");
     el.className = "card";
     el.innerHTML = `
-      <div class="thumb" data-video="${esc(v.videoId)}" data-thumb="${esc(v.thumbnail)}">
-        <img loading="lazy" src="${esc(v.thumbnail)}" alt="">
+      <button class="thumb thumb-btn" type="button" aria-label="Play ${esc(v.title)}">
+        <img loading="lazy" src="${esc(v.thumbnail)}" alt="${esc(v.title)}">
         <div class="playbtn"><div class="triangle"></div></div>
-      </div>
+      </button>
       <div class="meta">
         <div class="vtitle">${esc(v.title)}</div>
         <div class="subtle">${fmtDate(v.published)}</div>
@@ -117,119 +141,48 @@
     `;
 
     const thumb = el.querySelector(".thumb");
-    thumb.addEventListener("click", () => playInline(thumb));
+    thumb.addEventListener("click", () => openModal(v.videoId));
+
     return el;
   }
 
-  // ---- Inline play (no auto-expand) ----
-  function playInline(thumbEl) {
-    // Stop other players but keep layout unchanged
-    restoreAllThumbs();
+  function openModal(videoId) {
+    if (!modal || !modalFrame) return;
 
-    const vid = thumbEl.dataset.video;
-    thumbEl.innerHTML = `
-      <iframe
-        src="https://www.youtube.com/embed/${encodeURIComponent(vid)}?autoplay=1&mute=1&playsinline=1"
-        title="YouTube inline player"
-        allow="autoplay; encrypted-media; picture-in-picture; clipboard-write; fullscreen"
-        allowfullscreen
-        style="width:100%;height:100%;border:0;display:block;"
-      ></iframe>`;
-
-    // Add controls (Expand / Close) once per card
-    const card = thumbEl.closest(".card");
-    ensureControls(card, thumbEl);
+    modalFrame.src = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0`;
+    modal.classList.remove("hidden");
+    modal.setAttribute("aria-hidden", "false");
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
   }
 
-  function ensureControls(card, thumbEl) {
-    // Close (restores thumbnail)
-    let close = card.querySelector(".closebtn");
-    if (!close) {
-      close = document.createElement("button");
-      close.className = "closebtn";
-      close.type = "button";
-      close.title = "Close";
-      close.textContent = "✕";
-      close.addEventListener("click", collapseAny);
-      card.appendChild(close);
-    }
+  function closeModal() {
+    if (!modal || !modalFrame) return;
 
-    // Expand (try native fullscreen, fallback to CSS)
-    let expand = card.querySelector(".expandbtn");
-    if (!expand) {
-      expand = document.createElement("button");
-      expand.className = "expandbtn";
-      expand.type = "button";
-      expand.title = "Expand";
-      expand.textContent = "⤢";
-      expand.addEventListener("click", () => expandCard(card, thumbEl));
-      card.appendChild(expand);
-    }
-  }
-
-  async function expandCard(card, thumbEl) {
-    // 1) Try native fullscreen on the thumb container (best UX on desktop)
-    const el = thumbEl || card.querySelector(".thumb");
-    const reqFS = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
-    let wentFS = false;
-
-    if (reqFS) {
-      try {
-        await reqFS.call(el);
-        wentFS = true;
-      } catch (e) {
-        // likely blocked by parent iframe permissions (e.g., Google Sites)
-        wentFS = false;
-      }
-    }
-
-    // 2) Fallback: CSS expand (works everywhere)
-    if (!wentFS) {
-      card.classList.add("expanded");
-      // lock page scroll under expanded card
-      document.documentElement.style.overflow = "hidden";
-      document.body.style.overflow = "hidden";
-    }
-  }
-
-  function collapseAny() {
-    // Exit native fullscreen if active
-    const exitFS = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
-    if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
-      try { exitFS && exitFS.call(document); } catch(_) {}
-    }
-
-    // Remove CSS expansion + restore scroll
-    const expanded = document.querySelector(".card.expanded");
-    if (expanded) expanded.classList.remove("expanded");
+    modalFrame.src = "";
+    modal.classList.add("hidden");
+    modal.setAttribute("aria-hidden", "true");
     document.documentElement.style.overflow = "";
     document.body.style.overflow = "";
-
-    // Restore any inline players to thumbnails
-    restoreAllThumbs();
   }
 
-  function restoreAllThumbs() {
-    document.querySelectorAll(".thumb").forEach(t => {
-      if (t.querySelector("iframe")) {
-        const thumbUrl = t.dataset.thumb || "";
-        t.innerHTML = `
-          <img loading="lazy" src="${esc(thumbUrl)}" alt="">
-          <div class="playbtn"><div class="triangle"></div></div>`;
-        t.onclick = () => playInline(t);
-      }
-    });
-  }
-
-  // ---- Utils ----
   function fmtDate(iso) {
     const d = new Date(iso);
     if (isNaN(d)) return "";
-    return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+    return d.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric"
+    });
   }
+
   function esc(s) {
     return String(s || "").replace(/[&<>"']/g, c => ({
-      "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "\"": "&quot;",
+      "'": "&#39;"
     }[c]));
   }
 })();
