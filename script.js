@@ -42,8 +42,9 @@
       const xmlText = await fetchWithCors(FEED_URL, bust);
       let items = parseYouTubeFeed(xmlText);
 
-      // Keep only videos published in the past
       const now = new Date();
+
+      // Keep only videos with publish dates in the past
       items = items.filter(item => {
         const publishedDate = new Date(item.published);
         return !isNaN(publishedDate) && publishedDate <= now;
